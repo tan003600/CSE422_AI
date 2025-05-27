@@ -1,0 +1,78 @@
+mains=[]
+h=[]
+
+with open('/content/sample_data/Input file.txt','r') as inp:
+    for i in inp:
+        lobby=i.strip().split()
+
+        if len(lobby)<2:
+            continue
+        city,heu=lobby[0],int(lobby[1])
+        h.append([city,heu])
+
+        adj=[(lobby[i],int(lobby[i+1])) for i in range(2,len(lobby),2)]
+        if adj:
+            mains.append([city,adj])
+        else:
+            mains.append([city,None])
+
+def branch(parent):
+    for i in mains:
+        if i[0]==parent:
+            return i[1]
+    return None
+
+def A_star(start,end):
+    mark=[(start,0)]
+    visited=[]
+    shortest_d={start:0}
+    parents_list={start:start}
+
+    while mark:
+        curr=mark[0][0]
+
+        for node in mark:
+            total_cost_node = shortest_d[node[0]]+next((h for city,h in h if city==node[0]),float('inf'))
+            total_cost_curr = shortest_d[curr] + next((h for city,h in h if city==curr),float('inf'))
+
+            if total_cost_node<total_cost_curr:
+                curr = node[0]
+
+        mark=[x for x in mark if x[0] != curr]
+
+        if curr==end:
+            path=[]
+            while parents_list[curr]!=curr:
+                path.append(curr)
+                curr=parents_list[curr]
+            path.append(start)
+
+            result=""
+            for i in range(len(path) - 1):
+                result+=path[i] + " -> "
+            result+=path[-1]
+
+            print("Path:",result)
+            print(f"Total distance: {shortest_d[end]} km")
+            return path
+
+        neighbors=branch(curr)
+        if neighbors:
+            for neighbor,cost in neighbors:
+                if neighbor not in visited:
+                    new_distance=shortest_d[curr]+cost
+                    if neighbor not in shortest_d or new_distance<shortest_d[neighbor]:
+                        shortest_d[neighbor]=new_distance
+                        parents_list[neighbor]=curr
+                        mark.append((neighbor,new_distance))
+
+        visited.append(curr)
+
+    print('No Path Found!')
+
+startnode=input("Enter the name of place from where you want to start: ")
+destination=input("Enter the name of place where you want to end your travel: ")
+
+A_star(startnode,destination)
+
+inp.close()
